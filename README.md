@@ -1,30 +1,29 @@
-<<<<<<< HEAD
-# RevoBank API
+🏦 RevoBank API
 (BELOM DEPLOY API YA, NANTI AJA)
 
-## Overview of the API
+📊 Overview of the API
 RevoBank API is a RESTful API built with Flask that implements core banking features for User Management, Account Management, and Transaction Management. This API serves as the backend for the RevoBank application.
 
-## Features Implemented
-1. User Management
+✨ Features Implemented
+1. 👤 User Management
    - Create new user account
    - Retrieve user profile
    - Update user profile
 
-2. Account Management
+2. 💳 Account Management
    - Create new bank account
    - Retrieve account details
    - Update account information
    - List all accounts
    - Delete account
 
-3. Transaction Management
+3. 💸 Transaction Management
    - Create transactions (deposit, withdrawal, transfer)
    - Retrieve transaction details
    - List all transactions
    - Filter transactions by account
 
-## Installation and Setup Instructions
+🛠️ Installation and Setup Instructions
 1. Clone the repository
 ```bash
 git clone [repository-url]
@@ -50,11 +49,11 @@ python main.py
 
 The API will be available at `http://localhost:5000`
 
-## API Usage Documentation
+📝 API Usage Documentation
 
-### Request & Response Examples
+🔍 Request & Response Examples
 
-#### 1. Create User
+👤 1. Create User
 POST /users
 Request:
 {
@@ -72,7 +71,7 @@ Response: 201 Created
 }
 }
 
-#### 2. Create Account
+💰 2. Create Account
 POST /accounts
 Request:
 {
@@ -89,8 +88,7 @@ Response: 201 Created
 }
 }
 
-
-#### 3. Create Transaction
+💱 3. Create Transaction
 POST /transactions
 Request:
 {
@@ -109,8 +107,7 @@ Response: 201 Created
 }
 }
 
-
-### Error Response Format
+⚠️ Error Response Format
 400 Bad Request
 {
 "error": "Missing required fields"
@@ -120,5 +117,4 @@ Response: 201 Created
 "error": "Resource not found"
 }
 
-## TENGKYU, THAT'S ALL!. I LOVE U!
-
+❤️ TENGKYU, THAT'S ALL!. I LOVE U!
