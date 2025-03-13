@@ -122,7 +122,10 @@ Response: 201 Created
 
 ##
 TENGKYU, THAT'S ALL!. LOVE U
+
 =======
+INI YANG KEMAREN, KALO DIAPUS KAN LUCU YA
+
 # 📌 Activity Diagrams  
 
 Dokumen ini berisi diagram aktivitas yang menggambarkan dua proses utama dalam pengembangan backend.  
