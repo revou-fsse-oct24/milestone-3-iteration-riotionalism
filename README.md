@@ -1,26 +1,34 @@
 # 🏦 RevoBank API
 
 📊 Overview of the API
+<div style="text-align: justify">
 RevoBank API is a RESTful API built with Flask that implements core banking features for User Management, Account Management, and Transaction Management. This API serves as the backend for the RevoBank application.
+</div>
 
 ## ✨ Features Implemented
-1. 👤 User Management
+1. �� User Management
+   <div style="text-align: justify">
    - Create new user account
    - Retrieve user profile
    - Update user profile
+   </div>
 
 2. 💳 Account Management
+   <div style="text-align: justify">
    - Create new bank account
    - Retrieve account details
    - Update account information
    - List all accounts
    - Delete account
+   </div>
 
 3. 💸 Transaction Management
+   <div style="text-align: justify">
    - Create transactions (deposit, withdrawal, transfer)
    - Retrieve transaction details
    - List all transactions
    - Filter transactions by account
+   </div>
 
 ## 🛠️ Installation and Setup Instructions
 1. Clone the repository
@@ -50,70 +58,10 @@ The API will be available at `http://localhost:5000`
 
 ## 📝 API Usage Documentation
 
-### 🔍 Request & Response Examples
+| 🔗 Documentation Link | Description |
+|---------------------|-------------|
+| [📚 Click Here to View API Documentation](https://www.apidog.com/apidoc/shared-61623065-9612-491e-afc9-59a12a557d0e) | Complete API documentation with examples and testing playground |
 
-👤 1. Create User
-POST /users
-Request:
-{
-"username": "riotionalism",
-"email": "fytrioamando@gmail.com",
-"password": "rahasia"
-}
-Response: 201 Created
-{
-"message": "User created successfully",
-"data": {
-"id": 1,
-"username": "riotionalism",
-"email": "fytrioamando@gmail.com"
-}
-}
-
-💰 2. Create Account
-POST /accounts
-Request:
-{
-"account_type": "savings",
-"user_id": 1
-}
-Response: 201 Created
-{
-"message": "Account created successfully",
-"data": {
-"id": 1,
-"account_type": "savings",
-"user_id": 1
-}
-}
-
-💱 3. Create Transaction
-POST /transactions
-Request:
-{
-"type": "deposit",
-"amount": 1000,
-"to_account": 1
-}
-Response: 201 Created
-{
-"message": "Transaction completed successfully",
-"data": {
-"id": 1,
-"type": "deposit",
-"amount": 1000,
-"timestamp": "2024-03-14T10:30:00"
-}
-}
-
-⚠️ Error Response Format
-400 Bad Request
-{
-"error": "Missing required fields"
-}
-404 Not Found
-{
-"error": "Resource not found"
-}
+> 🌟 **Quick Access**: Click the link above to explore our interactive API documentation powered by APIDOG
 
 ❤️ TENGKYU, THAT'S ALL!. I LOVE U!
