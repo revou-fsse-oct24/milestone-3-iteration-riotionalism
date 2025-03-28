@@ -1,46 +1,50 @@
-from app.models import db, User
-from flask_login import login_user, logout_user
+from app import db
+from app.models import User
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class UserRepository:
-    @staticmethod
-    def create(user_data):
-        user = User(
-            username=user_data['username'],
-            email=user_data['email']
-        )
-        user.set_password(user_data['password'])
-        
-        db.session.add(user)
-        db.session.commit()
-        return user
+    def create_user(self, username, email, password):
+        try:
+            # Validasi email dan username unik
+            if self.get_user_by_email(email):
+                raise ValueError("Email already exists")
+            if self.get_user_by_username(username):
+                raise ValueError("Username already exists")
 
-    @staticmethod
-    def get_by_id(user_id):
+            user = User(
+                username=username,
+                email=email,
+                password_hash=generate_password_hash(password)
+            )
+            db.session.add(user)
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
+    def get_user_by_id(self, user_id):
         return User.query.get(user_id)
 
-    @staticmethod
-    def get_by_email(email):
+    def get_user_by_username(self, username):
+        return User.query.filter_by(username=username).first()
+
+    def get_user_by_email(self, email):
         return User.query.filter_by(email=email).first()
 
-    @staticmethod
-    def update(user_id, user_data):
-        user = User.query.get(user_id)
-        if user:
-            user.username = user_data.get('username', user.username)
-            user.email = user_data.get('email', user.email)
-            if 'password' in user_data:
-                user.set_password(user_data['password'])
-            db.session.commit()
-        return user
+    def update_user(self, user_id, data):
+        try:
+            user = self.get_user_by_id(user_id)
+            if user:
+                for key, value in data.items():
+                    setattr(user, key, value)
+                db.session.commit()
+                return user
+            return None
+        except Exception as e:
+            db.session.rollback()
+            raise e
 
-    @staticmethod
-    def login(email, password):
-        user = UserRepository.get_by_email(email)
-        if user and user.check_password(password):
-            login_user(user)
-            return user
-        return None
-
-    @staticmethod
-    def logout():
-        logout_user()
+    # Method baru untuk verifikasi password
+    def verify_password(self, user, password):
+        return check_password_hash(user.password_hash, password)

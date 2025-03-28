@@ -1,6 +1,8 @@
 from flask import jsonify, request
-from flask_login import current_user, login_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.repositories.user_repository import UserRepository
+
+user_repository = UserRepository()
 
 class UserView:
     @staticmethod
@@ -12,63 +14,57 @@ class UserView:
             if not all(field in data for field in required_fields):
                 return jsonify({"error": "Missing required fields"}), 400
                 
-            user = UserRepository.create(data)
+            user = user_repository.create(data)
             return jsonify({
                 "message": "User created successfully",
-                "data": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email
-                }
+                "data": user
             }), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
     @staticmethod
-    def login():
+    @jwt_required()
+    def get_current_user():
         try:
-            data = request.get_json()
-            if not all(k in data for k in ['email', 'password']):
-                return jsonify({"error": "Missing email or password"}), 400
-
-            user = UserRepository.login(data['email'], data['password'])
-            if user:
-                return jsonify({
-                    "message": "Login successful",
-                    "data": {
-                        "id": user.id,
-                        "username": user.username,
-                        "email": user.email
-                    }
-                }), 200
-            return jsonify({"error": "Invalid credentials"}), 401
+            current_user_id = get_jwt_identity()
+            user = user_repository.get_user_by_id(current_user_id)
+            
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+                
+            return jsonify({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'created_at': user.created_at.isoformat()
+            }), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
     @staticmethod
-    @login_required
-    def get_current_user():
-        return jsonify({
-            "id": current_user.id,
-            "username": current_user.username,
-            "email": current_user.email
-        }), 200
-
-    @staticmethod
-    @login_required
+    @jwt_required()
     def update_current_user():
         try:
+            current_user_id = get_jwt_identity()
             data = request.get_json()
-            user = UserRepository.update(current_user.id, data)
-            if user:
-                return jsonify({
-                    "message": "User updated successfully",
-                    "data": {
-                        "id": user.id,
-                        "username": user.username,
-                        "email": user.email
-                    }
-                }), 200
-            return jsonify({"error": "User not found"}), 404
+            
+            # Prevent password update through this endpoint
+            if 'password' in data:
+                return jsonify({"error": "Cannot update password through this endpoint"}), 400
+                
+            user = user_repository.update_user(current_user_id, data)
+            
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+                
+            return jsonify({
+                "message": "User updated successfully",
+                "user": {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'updated_at': user.updated_at.isoformat()
+                }
+            }), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 400

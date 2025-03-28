@@ -1,95 +1,76 @@
 from flask import jsonify, request
-from flask_login import current_user, login_required
-from app.repositories.transaction_repository import TransactionRepository
-from app.repositories.account_repository import AccountRepository
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from decimal import Decimal
+from app.repositories import TransactionRepository, AccountRepository
+
+transaction_repository = TransactionRepository()
+account_repository = AccountRepository()
 
 class TransactionView:
     @staticmethod
-    @login_required
-    def create_transaction():
+    @jwt_required()
+    def get_account_transactions(account_number):
         try:
-            data = request.get_json()
-            required_fields = ['type', 'amount']
-            if not all(field in data for field in required_fields):
-                return jsonify({"error": "Missing required fields"}), 400
-
-            # Validate transaction type
-            valid_types = ['deposit', 'withdrawal', 'transfer']
-            if data['type'] not in valid_types:
-                return jsonify({"error": "Invalid transaction type"}), 400
-
-            # Validate amount
-            try:
-                amount = float(data['amount'])
-                if amount <= 0:
-                    return jsonify({"error": "Amount must be positive"}), 400
-            except ValueError:
-                return jsonify({"error": "Invalid amount"}), 400
-
-            # Validate accounts and ownership
-            if data['type'] in ['withdrawal', 'transfer']:
-                from_account = AccountRepository.get_by_id(data['from_account'])
-                if not from_account or from_account.user_id != current_user.id:
-                    return jsonify({"error": "Invalid source account"}), 400
-                if float(from_account.balance) < amount:
-                    return jsonify({"error": "Insufficient funds"}), 400
-
-            if data['type'] in ['deposit', 'transfer']:
-                to_account = AccountRepository.get_by_id(data['to_account'])
-                if not to_account:
-                    return jsonify({"error": "Invalid destination account"}), 400
-
-            transaction = TransactionRepository.create(data)
-            return jsonify({
-                "message": "Transaction completed successfully",
-                "data": {
-                    "id": transaction.id,
-                    "type": transaction.type,
-                    "amount": float(transaction.amount),
-                    "created_at": transaction.created_at.isoformat()
-                }
-            }), 201
+            current_user_id = get_jwt_identity()
+            account = account_repository.get_account_by_number(account_number)
+            
+            if not account:
+                return jsonify({"error": "Account not found"}), 404
+                
+            if account.user_id != current_user_id:
+                return jsonify({"error": "Unauthorized"}), 403
+                
+            transactions = transaction_repository.get_account_transactions(account.id)
+            
+            return jsonify([{
+                'id': tx.id,
+                'type': tx.type,
+                'amount': float(tx.amount),
+                'description': tx.description,
+                'created_at': tx.created_at.isoformat(),
+                'status': tx.status
+            } for tx in transactions]), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
     @staticmethod
-    @login_required
-    def get_all_transactions():
-        account_id = request.args.get('account_id', type=int)
-        if account_id:
-            account = AccountRepository.get_by_id(account_id)
-            if not account or account.user_id != current_user.id:
-                return jsonify({"error": "Invalid account"}), 400
-
-        transactions = TransactionRepository.get_all(account_id)
-        return jsonify([{
-            "id": t.id,
-            "type": t.type,
-            "amount": float(t.amount),
-            "from_account": t.from_account_id,
-            "to_account": t.to_account_id,
-            "description": t.description,
-            "created_at": t.created_at.isoformat()
-        } for t in transactions]), 200
-
-    @staticmethod
-    @login_required
-    def get_transaction(transaction_id):
-        transaction = TransactionRepository.get_by_id(transaction_id)
-        if not transaction:
-            return jsonify({"error": "Transaction not found"}), 404
-
-        # Verify user has access to this transaction
-        if transaction.from_account and transaction.from_account.user_id != current_user.id:
-            if transaction.to_account and transaction.to_account.user_id != current_user.id:
-                return jsonify({"error": "Transaction not found"}), 404
-
-        return jsonify({
-            "id": transaction.id,
-            "type": transaction.type,
-            "amount": float(transaction.amount),
-            "from_account": transaction.from_account_id,
-            "to_account": transaction.to_account_id,
-            "description": transaction.description,
-            "created_at": transaction.created_at.isoformat()
-        }), 200
+    @jwt_required()
+    def create_deposit():
+        try:
+            current_user_id = get_jwt_identity()
+            data = request.get_json()
+            
+            if not all(k in data for k in ['account_number', 'amount']):
+                return jsonify({"error": "Missing required fields"}), 400
+                
+            account = account_repository.get_account_by_number(data['account_number'])
+            
+            if not account:
+                return jsonify({"error": "Account not found"}), 404
+                
+            if account.user_id != current_user_id:
+                return jsonify({"error": "Unauthorized"}), 403
+                
+            amount = Decimal(str(data['amount']))
+            if amount <= 0:
+                return jsonify({"error": "Amount must be positive"}), 400
+                
+            transaction = transaction_repository.process_deposit(
+                to_account_id=account.id,
+                amount=amount,
+                description=data.get('description', 'Deposit')
+            )
+            
+            return jsonify({
+                "message": "Deposit successful",
+                "transaction": {
+                    'id': transaction.id,
+                    'type': transaction.type,
+                    'amount': float(transaction.amount),
+                    'description': transaction.description,
+                    'created_at': transaction.created_at.isoformat(),
+                    'status': transaction.status
+                }
+            }), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400

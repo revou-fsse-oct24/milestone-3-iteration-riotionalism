@@ -1,43 +1,58 @@
-from app.models import db, Account
-import uuid
+from app import db
+from app.models import Account
+import random
+import string
 
 class AccountRepository:
-    @staticmethod
-    def create(account_data):
-        account = Account(
-            user_id=account_data['user_id'],
-            account_type=account_data['account_type'],
-            account_number=str(uuid.uuid4())[:8].upper()
-        )
-        db.session.add(account)
-        db.session.commit()
-        return account
+    def generate_account_number(self):
+        # Generate random 10-digit account number
+        return ''.join(random.choices(string.digits, k=10))
 
-    @staticmethod
-    def get_all():
-        return Account.query.all()
+    def create_account(self, user_id, account_type):
+        try:
+            # Validasi account_type
+            valid_types = ['savings', 'checking']
+            if account_type not in valid_types:
+                raise ValueError("Invalid account type")
 
-    @staticmethod
-    def get_by_id(account_id):
+            # Cek nomor akun unik
+            account_number = self.generate_account_number()
+            while self.get_account_by_number(account_number):
+                account_number = self.generate_account_number()
+
+            account = Account(
+                user_id=user_id,
+                account_type=account_type,
+                account_number=account_number,
+                balance=0.0
+            )
+            db.session.add(account)
+            db.session.commit()
+            return account
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
+    def get_account_by_id(self, account_id):
         return Account.query.get(account_id)
 
-    @staticmethod
-    def get_by_user(user_id):
+    def get_user_accounts(self, user_id):
         return Account.query.filter_by(user_id=user_id).all()
 
-    @staticmethod
-    def update(account_id, account_data):
-        account = Account.query.get(account_id)
-        if account:
-            account.account_type = account_data.get('account_type', account.account_type)
-            db.session.commit()
-        return account
+    def get_account_by_number(self, account_number):
+        return Account.query.filter_by(account_number=account_number).first()
 
-    @staticmethod
-    def delete(account_id):
-        account = Account.query.get(account_id)
-        if account:
-            db.session.delete(account)
+    def update_balance(self, account_id, new_balance):
+        try:
+            account = self.get_account_by_id(account_id)
+            if not account:
+                raise ValueError("Account not found")
+            if new_balance < 0:
+                raise ValueError("Balance cannot be negative")
+            
+            account.balance = new_balance
             db.session.commit()
-            return True
-        return False
+            return account
+        except Exception as e:
+            db.session.rollback()
+            raise e
