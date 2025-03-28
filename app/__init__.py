@@ -10,14 +10,22 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     
+    @app.route('/')
+    def index():
+        return jsonify({
+            'message': 'Welcome to RevoBank API',
+            'version': '1.0'
+        })
+    
     # Konfigurasi Database
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'revobank.db'))
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Konfigurasi JWT
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'rahasia-jwt')  # Gunakan env variable di production
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
+    # Konfigurasi JWT yang lebih aman
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-super-secret-key-change-this')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expired dalam 1 jam
+    app.config['JWT_ERROR_MESSAGE_KEY'] = 'error'
     
     # Inisialisasi
     db.init_app(app)
