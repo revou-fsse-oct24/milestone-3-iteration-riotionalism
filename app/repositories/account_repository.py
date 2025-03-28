@@ -1,30 +1,43 @@
+from app.models import db, Account
+import uuid
+
 class AccountRepository:
-    def __init__(self):
-        self.accounts = {}
-        self.current_id = 1
+    @staticmethod
+    def create(account_data):
+        account = Account(
+            user_id=account_data['user_id'],
+            account_type=account_data['account_type'],
+            account_number=str(uuid.uuid4())[:8].upper()
+        )
+        db.session.add(account)
+        db.session.commit()
+        return account
 
-    def create(self, account_data):
-        account_id = self.current_id
-        account_data['id'] = account_id
-        account_data['balance'] = account_data.get('balance', 0)
-        self.accounts[account_id] = account_data
-        self.current_id += 1
-        return account_data
+    @staticmethod
+    def get_all():
+        return Account.query.all()
 
-    def get_all(self):
-        return list(self.accounts.values())
+    @staticmethod
+    def get_by_id(account_id):
+        return Account.query.get(account_id)
 
-    def get_by_id(self, account_id):
-        return self.accounts.get(account_id)
+    @staticmethod
+    def get_by_user(user_id):
+        return Account.query.filter_by(user_id=user_id).all()
 
-    def update(self, account_id, account_data):
-        if account_id in self.accounts:
-            self.accounts[account_id].update(account_data)
-            return self.accounts[account_id]
-        return None
+    @staticmethod
+    def update(account_id, account_data):
+        account = Account.query.get(account_id)
+        if account:
+            account.account_type = account_data.get('account_type', account.account_type)
+            db.session.commit()
+        return account
 
-    def delete(self, account_id):
-        if account_id in self.accounts:
-            del self.accounts[account_id]
+    @staticmethod
+    def delete(account_id):
+        account = Account.query.get(account_id)
+        if account:
+            db.session.delete(account)
+            db.session.commit()
             return True
         return False

@@ -1,54 +1,84 @@
 from flask import jsonify, request
+from flask_login import current_user, login_required
 from app.repositories.account_repository import AccountRepository
-
-account_repository = AccountRepository()
 
 class AccountView:
     @staticmethod
-    def get_all_accounts():
-        accounts = account_repository.get_all()
-        return jsonify(accounts), 200
-
-    @staticmethod
-    def get_account(account_id):
-        account = account_repository.get_by_id(account_id)
-        if account:
-            return jsonify(account), 200
-        return jsonify({"error": "Account not found"}), 404
-
-    @staticmethod
+    @login_required
     def create_account():
         try:
             data = request.get_json()
-            required_fields = ['account_type', 'user_id']
+            data['user_id'] = current_user.id
             
-            if not all(field in data for field in required_fields):
-                return jsonify({"error": "Missing required fields"}), 400
+            if 'account_type' not in data:
+                return jsonify({"error": "Account type is required"}), 400
                 
-            account = account_repository.create(data)
+            account = AccountRepository.create(data)
             return jsonify({
                 "message": "Account created successfully",
-                "data": account
+                "data": {
+                    "id": account.id,
+                    "account_type": account.account_type,
+                    "account_number": account.account_number,
+                    "balance": float(account.balance)
+                }
             }), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
     @staticmethod
+    @login_required
+    def get_all_accounts():
+        accounts = AccountRepository.get_by_user(current_user.id)
+        return jsonify([{
+            "id": acc.id,
+            "account_type": acc.account_type,
+            "account_number": acc.account_number,
+            "balance": float(acc.balance)
+        } for acc in accounts]), 200
+
+    @staticmethod
+    @login_required
+    def get_account(account_id):
+        account = AccountRepository.get_by_id(account_id)
+        if account and account.user_id == current_user.id:
+            return jsonify({
+                "id": account.id,
+                "account_type": account.account_type,
+                "account_number": account.account_number,
+                "balance": float(account.balance)
+            }), 200
+        return jsonify({"error": "Account not found"}), 404
+
+    @staticmethod
+    @login_required
     def update_account(account_id):
         try:
+            account = AccountRepository.get_by_id(account_id)
+            if not account or account.user_id != current_user.id:
+                return jsonify({"error": "Account not found"}), 404
+
             data = request.get_json()
-            account = account_repository.update(account_id, data)
-            if account:
-                return jsonify({
-                    "message": "Account updated successfully",
-                    "data": account
-                }), 200
-            return jsonify({"error": "Account not found"}), 404
+            updated_account = AccountRepository.update(account_id, data)
+            return jsonify({
+                "message": "Account updated successfully",
+                "data": {
+                    "id": updated_account.id,
+                    "account_type": updated_account.account_type,
+                    "account_number": updated_account.account_number,
+                    "balance": float(updated_account.balance)
+                }
+            }), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
     @staticmethod
+    @login_required
     def delete_account(account_id):
-        if account_repository.delete(account_id):
+        account = AccountRepository.get_by_id(account_id)
+        if not account or account.user_id != current_user.id:
+            return jsonify({"error": "Account not found"}), 404
+
+        if AccountRepository.delete(account_id):
             return jsonify({"message": "Account deleted successfully"}), 200
-        return jsonify({"error": "Account not found"}), 404
+        return jsonify({"error": "Failed to delete account"}), 400

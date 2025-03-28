@@ -7,6 +7,10 @@ user_bp = Blueprint('user', __name__)
 def create_user():
     return UserView.create_user()
 
+@user_bp.route('/login', methods=['POST'])
+def login():
+    return UserView.login()
+
 @user_bp.route('/users/me', methods=['GET'])
 def get_current_user():
     return UserView.get_current_user()
