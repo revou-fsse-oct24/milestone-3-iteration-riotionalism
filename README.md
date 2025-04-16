@@ -35,7 +35,7 @@ RevoBank API is a RESTful API built with Flask that implements core banking feat
 FLASK_APP=app
 FLASK_ENV=development
 DATABASE_URL=sqlite:///revobank.db
-JWT_SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your-super-secret-key-change-this
 
 ### 👤 Users Table
 - `id` (Integer, Primary Key)
@@ -82,7 +82,7 @@ python main.py
 The API will be available at `http://localhost:8000`
 
 ## 🚀 Deployment
-This API is deployed on Koyeb and can be accessed at: https://complete-kalli-riotionalism-e9317c17.koyeb.app/
+This deployed on Koyeb and can be accessed at: https://wee-bill-riotionalism-e9187ffa.koyeb.app/
 
 ## 📝 API Usage Documentation
 

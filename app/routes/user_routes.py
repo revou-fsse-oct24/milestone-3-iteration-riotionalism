@@ -13,7 +13,8 @@ def create_user():
 @jwt_required()
 def get_current_user():
     try:
-        current_user_id = get_jwt_identity()
+        # Convert jwt identity ke integer
+        current_user_id = int(get_jwt_identity())
         user = user_repo.get_user_by_id(current_user_id)
         
         if not user:
@@ -35,10 +36,10 @@ def get_current_user():
 @jwt_required()
 def update_current_user():
     try:
-        current_user_id = get_jwt_identity()
+        # Convert jwt identity ke integer
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
         
-        # Prevent password update through this endpoint
         if 'password' in data:
             return jsonify({'error': 'Cannot update password through this endpoint'}), 400
             
